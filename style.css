@@ -8,7 +8,7 @@
 * { box-sizing: border-box; }
 html { scroll-behavior: smooth; }
 body { margin: 0; background: var(--bg); color: var(--text); font: 17px/1.6 var(--sans); -webkit-font-smoothing: antialiased; }
-img { max-width: 100%; display: block; }
+img { max-width: 100%; height: auto; display: block; }
 a { color: var(--blue); }
 .wrap { max-width: 1120px; margin: 0 auto; padding: 0 20px; }
 
