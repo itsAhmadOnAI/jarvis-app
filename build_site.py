@@ -1,9 +1,13 @@
 """Builds the static pages of itsahmadonai.github.io/jarvis-app (shared nav + footer)."""
+import json
 import os
 
 OUT = os.path.dirname(os.path.abspath(__file__))
 FORM = "https://docs.google.com/forms/d/e/1FAIpQLScqDjqnsNxoVrz9v8gEmZezJogX1aKm2vPyD3jjPqovd2WQjw/viewform"
 CHOICE = 1533219292
+SITE = "https://itsahmadonai.github.io/jarvis-app/"
+AUTHOR = {"@type": "Person", "name": "Ahmad", "url": "https://github.com/itsAhmadOnAI"}
+PAGES = []   # (file, priority) for the sitemap
 
 
 def form(choice):
@@ -25,32 +29,64 @@ def icon(name):
             f'stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">{ICONS[name]}</svg></div>')
 
 
-def page(file, title, desc, body, current=""):
+def page(file, title, desc, body, current="", og="og-home", ld=(), priority="0.8", hero=""):
+    url = SITE + ("" if file == "index.html" else file)
+    PAGES.append((file, priority))
+
     def link(href, text, cls=""):
         cur = ' aria-current="page"' if href == current else ""
         c = f' class="{cls}"' if cls else ""
         return f'<a href="{href}"{c}{cur}>{text}</a>'
+    data = "".join(f'<script type="application/ld+json">{json.dumps(d, ensure_ascii=False)}</script>' for d in ld)
+    pre = f'<link rel="preload" as="image" href="{hero}" fetchpriority="high">' if hero else ""
     html = f"""<!doctype html>
 <html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>{title}</title><meta name="description" content="{desc}">
-<meta property="og:title" content="{title}"><meta property="og:description" content="{desc}">
-<meta property="og:image" content="https://itsahmadonai.github.io/jarvis-app/img/home.webp">
-<link rel="stylesheet" href="style.css"></head><body>
-<nav><div class="wrap"><a class="logo" href="index.html"><span class="dot"></span>Jarvis</a>
+<title>{title}</title>
+<meta name="description" content="{desc}">
+<link rel="canonical" href="{url}">
+<meta name="robots" content="index,follow,max-image-preview:large">
+<meta name="author" content="Ahmad">
+<meta name="theme-color" content="#0D1117">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="icon" href="favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="manifest" href="site.webmanifest">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Jarvis">
+<meta property="og:locale" content="en_US">
+<meta property="og:url" content="{url}">
+<meta property="og:title" content="{title}">
+<meta property="og:description" content="{desc}">
+<meta property="og:image" content="{SITE}img/{og}.jpg">
+<meta property="og:image:width" content="1200"><meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="{title}">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{title}">
+<meta name="twitter:description" content="{desc}">
+<meta name="twitter:image" content="{SITE}img/{og}.jpg">
+{pre}<link rel="stylesheet" href="style.css">{data}</head><body>
+<a class="skip" href="#main">Skip to content</a>
+<nav aria-label="Main"><div class="wrap"><a class="logo" href="./" aria-label="Jarvis home"><span class="dot"></span>Jarvis</a>
 <div class="links">{link("early-access.html", "Early access")}{link("build.html", "The build")}{link("work-with-me.html", "Shopify", "hide-sm")}</div></div></nav>
+<main id="main">
 {body}
+</main>
 <footer><div class="wrap"><span>A Jarvis-like personal assistant, in development. Not affiliated with Marvel.</span>
-<span><a href="early-access.html">Early access</a> · <a href="build.html">The build</a> · <a href="work-with-me.html">Work with me</a> · <a href="privacy.html">Privacy</a></span></div></footer>
+<span><a href="./">Home</a> · <a href="early-access.html">Early access</a> · <a href="build.html">The build</a> · <a href="work-with-me.html">Work with me</a> · <a href="privacy.html">Privacy</a></span></div></footer>
 </body></html>
 """
     open(os.path.join(OUT, file), "w").write(html)
+
+
+SIZES = {"home": (1600, 1000), "phone": (780, 1688)}
 
 
 def row(tag, title, text, ticks, img, alt, flip=False):
     lis = "".join(f"<li>{t}</li>" for t in ticks)
     return f"""<div class="row{' flip' if flip else ''}"><div class="text"><span class="tag">{tag}</span><h3>{title}</h3>
 <p>{text}</p><ul class="ticks">{lis}</ul></div>
-<div class="pic"><img src="img/{img}.webp" alt="{alt}"></div></div>"""
+<div class="pic"><img src="img/{img}.webp" alt="{alt}" width="{SIZES.get(img, (762, 1280))[0]}" height="{SIZES.get(img, (762, 1280))[1]}" loading="lazy" decoding="async"></div></div>"""
 
 
 # ---------------------------------------------------------------- home
@@ -61,7 +97,7 @@ home = f"""
 <p class="lead">Talk to it like a person. It knows your day, remembers what matters to you and gets real work done
 on your own computer, asking first before anything risky.</p>
 <div class="ctas"><a class="btn primary" href="early-access.html">Get early access</a><a class="btn" href="build.html">Watch it being built</a></div>
-<img class="shot" src="img/home.webp" width="1600" height="1000" alt="The assistant's home screen: a glowing orb in the middle, the workspace on the left with a running job, and a conversation on the right">
+<img class="shot" src="img/home.webp" width="1600" height="1000" fetchpriority="high" alt="The assistant's home screen: a glowing orb in the middle, the workspace on the left with a running job, and a conversation on the right">
 </div></header>
 
 <section><div class="wrap center">
@@ -116,10 +152,25 @@ on your own computer, asking first before anything risky.</p>
 <a class="card" href="work-with-me.html"><h3>I run a Shopify store</h3><p>Get sections built fast and checked on every screen.</p><span class="go">Work with me →</span></a>
 </div></div></section>
 """
-page("index.html", "Jarvis | your very own personal assistant",
-     "A Jarvis-like personal assistant that talks like a person, runs on your laptop and does real work.", home)
+page("index.html", "Jarvis: an AI voice assistant that runs on your laptop",
+     "A Jarvis-like personal AI assistant you talk to like a person. It remembers you, runs on your own laptop and does real work: calendar, email, desktop and more.",
+     home, og="og-home", priority="1.0", hero="img/home.webp", ld=[
+         {"@context": "https://schema.org", "@type": "WebSite", "name": "Jarvis", "url": SITE,
+          "description": "A Jarvis-like personal AI voice assistant, built in public.", "author": AUTHOR},
+         {"@context": "https://schema.org", "@type": "SoftwareApplication", "name": "Jarvis",
+          "applicationCategory": "UtilitiesApplication", "operatingSystem": "Linux", "url": SITE,
+          "image": SITE + "img/og-home.jpg", "screenshot": SITE + "img/home.webp", "author": AUTHOR,
+          "description": "A personal AI voice assistant: hands-free conversation, memory, calendar, email drafts, desktop control and background jobs, running on your own laptop.",
+          "featureList": ["Hands-free voice conversation with interruptions", "Memory you can see and edit",
+                          "Calendar, reminders and a morning brief", "Reads email and writes drafts, never sends",
+                          "Desktop control: apps, windows, media, screenshots, typing", "Background jobs while you talk",
+                          "Asks before anything risky"]}])
 
 # ---------------------------------------------------------------- early access
+FAQ = [("When can I try it?", "There's no date yet. Waitlist members hear first, before anyone else."),
+       ("Which computers will it run on?", "It runs on Linux laptops today. Other systems come later. Tell me yours on the form."),
+       ("What will it cost?", "Not decided yet. Waitlist members get the first offer."),
+       ("Is my data safe?", "Your memories, chats and files stay on your own computer.")]
 early = f"""
 <header class="hero"><div class="wrap">
 <span class="eyebrow">Early access</span>
@@ -130,6 +181,7 @@ and you'll hear first when it's ready to try.</p>
 </div></header>
 
 <section><div class="wrap">
+<h2 class="center">Built around you</h2>
 {row("What you get", "An assistant that's actually yours",
      "Not a chat window in a browser tab. A presence on your computer that you talk to, that knows your day and does the work.",
      ["Hands-free conversation, with interruptions", "Your calendar, mail and reminders in one place",
@@ -142,17 +194,18 @@ and you'll hear first when it's ready to try.</p>
 
 <section class="alt"><div class="wrap prose">
 <h2 style="margin-top:0">Questions</h2>
-<details><summary>When can I try it?</summary><p>There's no date yet. Waitlist members hear first, before anyone else.</p></details>
-<details><summary>Which computers will it run on?</summary><p>It runs on Linux laptops today. Other systems come later. Tell me yours on the form.</p></details>
-<details><summary>What will it cost?</summary><p>Not decided yet. Waitlist members get the first offer.</p></details>
-<details><summary>Is my data safe?</summary><p>Your memories, chats and files stay on your own computer. See the <a href="privacy.html">privacy page</a>.</p></details>
+{"".join(f"<details><summary>{q}</summary><p>{a}</p></details>" for q, a in FAQ)}
+<p>More on the <a href="privacy.html">privacy page</a>.</p>
 </div></section>
 
 <section><div class="wrap"><div class="cta-band">
 <h2>Want in?</h2><p class="sub" style="margin-inline:auto">It takes 20 seconds. No spam, just the news that matters.</p>
 <a class="btn primary" href="{form('Early access')}">Join the waitlist</a></div></div></section>
 """
-page("early-access.html", "Early access | Jarvis", "Join the waitlist for a Jarvis-like personal assistant.", early, "early-access.html")
+page("early-access.html", "Early access: a Jarvis-like AI personal assistant",
+     "Join the waitlist for a hands-free AI voice assistant that knows your day, remembers what matters and works on your own computer.",
+     early, "early-access.html", og="og-early-access", ld=[{"@context": "https://schema.org", "@type": "FAQPage", "mainEntity": [
+         {"@type": "Question", "name": q, "acceptedAnswer": {"@type": "Answer", "text": a}} for q, a in FAQ]}])
 
 # ---------------------------------------------------------------- the build
 build = f"""
@@ -161,7 +214,7 @@ build = f"""
 <h1>I'm building my own <em>Jarvis.</em> Follow along.</h1>
 <p class="lead">One person, one laptop and a lot of AI. Every feature, every bug and every "it finally works" moment,
 shared as it happens.</p>
-<div class="ctas"><a class="btn" aria-disabled="true">YouTube channel: coming soon</a><a class="btn primary" href="{form('Updates on the build')}">Get updates</a></div>
+<div class="ctas"><span class="btn" aria-disabled="true">YouTube channel: coming soon</span><a class="btn primary" href="{form('Updates on the build')}">Get updates</a></div>
 </div></header>
 
 <section><div class="wrap" style="display:grid;gap:48px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
@@ -194,7 +247,9 @@ shared as it happens.</p>
 <h2>Don't miss an episode</h2><p class="sub" style="margin-inline:auto">The channel launches soon. Leave your email and I'll tell you when.</p>
 <a class="btn primary" href="{form('Updates on the build')}">Get updates</a></div></div></section>
 """
-page("build.html", "The build | Jarvis", "Follow the build of a Jarvis-like personal assistant, in public.", build, "build.html")
+page("build.html", "Building a real-life Jarvis AI assistant, in public",
+     "Follow one developer building a Jarvis-like AI voice assistant: what already works, what's next and every lesson along the way.",
+     build, "build.html", og="og-build")
 
 # ---------------------------------------------------------------- work with me
 work = f"""
@@ -239,8 +294,12 @@ shopper on phone, tablet and desktop, and I review every detail before you see i
 <h2>Have a store that needs some love?</h2><p class="sub" style="margin-inline:auto">Tell me about it. I'll reply with how I'd do it.</p>
 <a class="btn primary" href="{form('A Shopify project')}">Start a project</a></div></div></section>
 """
-page("work-with-me.html", "Work with me | Shopify sections, built fast",
-     "Shopify sections built by an AI assistant, tested on every screen and reviewed by hand.", work, "work-with-me.html")
+page("work-with-me.html", "Custom Shopify sections, built by AI and checked by hand",
+     "Fully responsive, fully customizable Shopify sections: built on a copy of your theme, tested on phone, tablet and desktop, and live only when you approve.",
+     work, "work-with-me.html", og="og-work", ld=[{"@context": "https://schema.org", "@type": "Service",
+         "serviceType": "Shopify theme section development", "name": "Custom Shopify sections",
+         "description": "Responsive, theme-editor-customizable Shopify sections built with an AI assistant on an unpublished copy of the theme, tested on every screen size and reviewed by hand before going live.",
+         "provider": AUTHOR, "areaServed": "Worldwide", "url": SITE + "work-with-me.html"}])
 
 # ---------------------------------------------------------------- privacy
 privacy = """
@@ -267,5 +326,32 @@ privacy = """
 <p>Access can be removed at any time with Disconnect in Jarvis's Settings, or at <a href="https://myaccount.google.com/permissions">myaccount.google.com/permissions</a>.</p>
 </div></section>
 """
-page("privacy.html", "Privacy policy | Jarvis", "How Jarvis handles Google data.", privacy, "privacy.html")
+page("privacy.html", "Privacy policy | Jarvis",
+     "How Jarvis, a personal AI assistant, handles Google Calendar and Gmail data: kept on the owner's laptop, never sold or shared.",
+     privacy, "privacy.html", priority="0.3")
+
+nf = """<section class="hero"><div class="wrap"><span class="eyebrow">404</span>
+<h1>That page has <em>wandered off.</em></h1><p class="lead">Even a good assistant can't find everything.</p>
+<div class="ctas"><a class="btn primary" href="/jarvis-app/">Back to home</a></div></div></section>"""
+page("404.html", "Page not found | Jarvis", "This page doesn't exist.", nf, priority="")
+html404 = open(os.path.join(OUT, "404.html")).read()
+html404 = html404.replace('content="index,follow,max-image-preview:large"', 'content="noindex"')
+html404 = html404.replace('href="', 'href="/jarvis-app/').replace('href="/jarvis-app/https://', 'href="https://').replace('href="/jarvis-app/./"', 'href="/jarvis-app/"').replace('href="/jarvis-app/#', 'href="#').replace('href="/jarvis-app//jarvis-app/', 'href="/jarvis-app/')
+import re
+html404 = re.sub(r'<link rel="canonical"[^>]*>\n?', '', html404)
+open(os.path.join(OUT, "404.html"), "w").write(html404)
+
+import datetime
+today = datetime.date.today().isoformat()
+urls = "".join(f"<url><loc>{SITE}{'' if f == 'index.html' else f}</loc><lastmod>{today}</lastmod><priority>{pr}</priority></url>"
+               for f, pr in PAGES if pr)
+open(os.path.join(OUT, "sitemap.xml"), "w").write(
+    f'<?xml version="1.0" encoding="UTF-8"?><urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">{urls}</urlset>\n')
+open(os.path.join(OUT, "robots.txt"), "w").write(f"User-agent: *\nAllow: /\nSitemap: {SITE}sitemap.xml\n")
+open(os.path.join(OUT, "site.webmanifest"), "w").write(json.dumps({
+    "name": "Jarvis", "short_name": "Jarvis", "start_url": "/jarvis-app/", "scope": "/jarvis-app/", "display": "standalone",
+    "background_color": "#0D1117", "theme_color": "#0D1117", "icons": [
+        {"src": "icon-192.png", "sizes": "192x192", "type": "image/png"},
+        {"src": "icon-512.png", "sizes": "512x512", "type": "image/png"},
+        {"src": "favicon.svg", "sizes": "any", "type": "image/svg+xml"}]}, indent=1))
 print("built")
